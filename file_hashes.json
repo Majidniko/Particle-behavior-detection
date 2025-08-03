@@ -1,0 +1,5 @@
+{
+  "app.py": "sha256-hash-of-app.py",
+  "updater.py": "sha256-hash-of-updater.py",
+  "version.txt": "sha256-hash-of-version.txt"
+}
