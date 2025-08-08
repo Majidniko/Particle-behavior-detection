@@ -12,7 +12,7 @@ class Camera:
         # پیکربندی دوربین: main برای ضبط با کیفیت بالا، lores برای استریم سریع
         config = self.picam2.create_video_configuration(
             main={"size": (3840, 2160)},
-            lores={"size": (1024, 768)},
+            lores={"size": (1280, 768), "format": "RGB888"},  # RGB مستقیم
             display="lores",
             encode="main"
         )
