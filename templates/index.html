@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دوربین رزبری پای</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-dark text-light">
+<div class="container py-4">
+    <h1 class="text-center mb-4">📷 سیستم دوربین رزبری پای</h1>
+
+    <div class="card bg-secondary text-center p-3">
+        <img src="{{ url_for('video_feed') }}" class="img-fluid rounded border border-info shadow" alt="Live Video">
+    </div>
+
+    <div class="d-flex justify-content-center mt-4">
+        <button id="capture-btn" class="btn btn-success mx-2">📸 گرفتن عکس</button>
+        <button id="record-btn" class="btn btn-danger mx-2">🎥 ضبط ویدئو</button>
+    </div>
+
+    <div id="message" class="text-center mt-3"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/script.js"></script>
+</body>
+</html>
