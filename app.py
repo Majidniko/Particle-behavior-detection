@@ -1,6 +1,6 @@
 from flask import Flask, render_template, Response, jsonify, request
 from camera import Camera
-from updater import check_and_update
+# from updater import check_and_update
 import threading
 
 app = Flask(__name__)
@@ -27,5 +27,5 @@ def start_recording():
     return jsonify({"status": "recording started", "duration": duration})
 
 if __name__ == '__main__':
-    check_and_update()
+    #check_and_update()
     app.run(host='0.0.0.0', port=5000, threaded=True)
