@@ -21,20 +21,20 @@ def setup_logging():
     os.makedirs(BACKUP_DIR, exist_ok=True)
 
 def log_message(message):
-    """ذخیره پیام در فایل لاگ"""
+    print("saving message to Log")
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(LOG_FILE, "a") as f:
         f.write(f"[{timestamp}] {message}\n")
 
 def get_current_version():
-    """خواندن نسخه فعلی برنامه"""
+    print("Read corrent program version")
     if not os.path.exists(VERSION_FILE):
         return "0.0.0"
     with open(VERSION_FILE, "r") as f:
         return f.read().strip()
 
 def get_latest_version():
-    """دریافت آخرین نسخه از گیت‌هاب"""
+    print("Get last version")
     try:
         version_url = f"{REPO_URL}/raw/main/{VERSION_FILE}"
         response = requests.get(version_url)
@@ -46,7 +46,7 @@ def get_latest_version():
         return None
 
 def calculate_file_hash(file_path):
-    """محاسبه هش SHA-256 یک فایل"""
+    print("Creat Hash file")
     sha256 = hashlib.sha256()
     with open(file_path, "rb") as f:
         while chunk := f.read(4096):
@@ -54,6 +54,7 @@ def calculate_file_hash(file_path):
     return sha256.hexdigest()
 
 def verify_file_hashes():
+    print("CHecking Hash")
     """بررسی هش فایل‌ها با نسخه اصلی"""
     try:
         hashes_url = f"{REPO_URL}/raw/main/{HASH_FILE}"
@@ -79,7 +80,7 @@ def verify_file_hashes():
         return False
 
 def backup_files():
-    """تهیه نسخه پشتیبان از فایل‌های فعلی"""
+    print("Create a backup of current files ")
     try:
         if os.path.exists(BACKUP_DIR):
             shutil.rmtree(BACKUP_DIR)
@@ -102,6 +103,7 @@ def backup_files():
         return False
 
 def rollback_update():
+    print("Error in update: return to previes version")
     """بازگشت به نسخه قبلی در صورت شکست آپدیت"""
     try:
         if not os.path.exists(BACKUP_DIR):
@@ -174,7 +176,7 @@ def restart_program():
     os.execl(python, python, *sys.argv)
 
 def check_and_update():
-    """چک کردن آپدیت و نصب آن"""
+    print("چک کردن آپدیت و نصب آن")
     setup_logging()
     current_version = get_current_version()
     latest_version = get_latest_version()
