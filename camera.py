@@ -65,7 +65,7 @@ class Camera:
         with self.recording_lock:
             self.video_writer = cv2.VideoWriter(video_path, fourcc, fps, frame_size)
             if not self.video_writer.isOpened():
-                raise RuntimeError("Cannot open video writer")
+                raise RuntimeError("Cannot open video writer - خطا در باز کردن ذخیره کننده ویدئو")
             self.recording = True
 
         start_time = time.time()

@@ -3,7 +3,7 @@ document.getElementById("capture-btn").addEventListener("click", () => {
         .then(res => res.json())
         .then(data => {
             document.getElementById("message").innerHTML =
-                `<span class="text-success">✅ عکس ذخیره شد: ${data.path}</span>`;
+                `<span class="text-success">Picture Saved ✅ عکس ذخیره شد \n Locate in: ${data.path} : محل ذخیره</span>`;
         });
 });
 
@@ -17,5 +17,6 @@ document.getElementById("record-btn").addEventListener("click", () => {
     .then(data => {
         document.getElementById("message").innerHTML =
             `<span class="text-warning">⏺ در حال ضبط ویدئو...</span>`;
+            `<span class="text-warning">⏺ Video is recording...</span>`;
     });
 });
