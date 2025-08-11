@@ -46,7 +46,7 @@ class Camera:
             try:
                 # frame = self.picam2.capture_array("lores")
                 # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-                frame = self.picam2.capture_array("lores")
+                frame = self.picam2.capture_array("main")
                 if len(frame.shape) == 2 or frame.shape[2] == 1:
                     # خاکستری
                     frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
