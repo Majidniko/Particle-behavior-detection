@@ -7,7 +7,6 @@ from libcamera import controls
 
 class Camera:
     def conf(self,mode):
-        self.picam2 = Picamera2()
         if mode =="full":
             self.picam2 = Picamera2()
                     # پیکربندی دوربین: main برای ضبط با کیفیت بالا، lores برای استریم سریع
