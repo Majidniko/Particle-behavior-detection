@@ -12,7 +12,8 @@ class Camera:
         # پیکربندی دوربین: main برای ضبط با کیفیت بالا، lores برای استریم سریع
         config = self.picam2.create_video_configuration(
             main={"size": (3840, 2160)},
-            lores={"size": (1280, 768), "format": "RGB888"},  # RGB مستقیم
+            lores={"size": (800, 600)},  # RGB مستقیم
+            # lores={"size": (1280, 768), "format": "RGB888"},  # RGB مستقیم
             display="lores",
             encode="main"
         )
@@ -37,8 +38,15 @@ class Camera:
         """استریم ویدئو با کیفیت پایین برای روانی بیشتر"""
         while True:
             try:
+                # frame = self.picam2.capture_array("lores")
+                # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
                 frame = self.picam2.capture_array("lores")
-                frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                if len(frame.shape) == 2 or frame.shape[2] == 1:
+                    # خاکستری
+                    frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+                else:
+                    # RGB به BGR
+                    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
                 ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
                 if ret:
                     yield (b'--frame\r\n'
