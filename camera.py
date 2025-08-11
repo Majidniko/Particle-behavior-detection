@@ -37,9 +37,9 @@ class Camera:
         """استریم ویدئو با کیفیت پایین برای روانی بیشتر"""
         while True:
             try:
-                frame = self.picam2.capture_array("lores")
+                frame = self.picam2.capture_array("main")
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 10])
                 if ret:
                     yield (b'--frame\r\n'
                            b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
