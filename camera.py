@@ -59,8 +59,9 @@ class Camera:
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         video_path = os.path.join(self.video_folder, f"video_{timestamp}.mp4")
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        fps = 15
-        frame_size = (3840, 2160)
+        fps = 30
+        frame_size = (1920, 1080)  # Full HD
+        # frame_size = (3840, 2160) # 4K
 
         with self.recording_lock:
             self.video_writer = cv2.VideoWriter(video_path, fourcc, fps, frame_size)
@@ -70,12 +71,17 @@ class Camera:
 
         start_time = time.time()
         try:
-            while self.recording and (time.time() - start_time) < duration:
+            max_frames = int(fps * duration)  # مثلا fps=15 و duration=30
+            frames_captured = 0
+            while self.recording and frames_captured < max_frames:
                 frame = self.picam2.capture_array("main")
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
                 with self.recording_lock:
                     self.video_writer.write(frame)
-                time.sleep(1 / 30)
+                #time.sleep(1 / 30)
+                time.sleep(1 / fps)
+                frames_captured += 1
+
         finally:
             self.stop_recording()
         return video_path
