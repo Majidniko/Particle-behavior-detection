@@ -6,26 +6,46 @@ from picamera2 import Picamera2
 from libcamera import controls
 
 class Camera:
+    def conf(self,mode):
+        if mode =="full":
+            self.picam2 = Picamera2()
+                    # پیکربندی دوربین: main برای ضبط با کیفیت بالا، lores برای استریم سریع
+            config = self.picam2.create_video_configuration(
+                main={"size": (3840, 2160)},
+                lores={"size": (1024, 768), "format": "RGB888"},  # RGB مستقیم
+                display="lores",
+                encode="main"
+            )
+            self.picam2.set_controls({"FrameRate": 30.0})
+            self.picam2.configure(config)
+            self.picam2.start()
+            time.sleep(2)  # منتظر ماندن برای پایدار شدن دوربین
+
+            # متغیرهای ضبط
+            self.recording = False
+            self.recording_lock = Lock()
+            self.video_writer = None
+        else:
+            self.picam2 = Picamera2()
+                    # پیکربندی دوربین: main برای ضبط با کیفیت بالا، lores برای استریم سریع
+            config = self.picam2.create_video_configuration(
+                main={"size": (1920, 1080)},
+                lores={"size": (1024, 768), "format": "RGB888"},  # RGB مستقیم
+                display="lores",
+                encode="main"
+            )
+            self.picam2.set_controls({"FrameRate": 30.0})
+            self.picam2.configure(config)
+            self.picam2.start()
+            time.sleep(2)  # منتظر ماندن برای پایدار شدن دوربین
+
+            # متغیرهای ضبط
+            self.recording = False
+            self.recording_lock = Lock()
+            self.video_writer = None
     def __init__(self):
         self.picam2 = Picamera2()
-
-        # پیکربندی دوربین: main برای ضبط با کیفیت بالا، lores برای استریم سریع
-        config = self.picam2.create_video_configuration(
-            main={"size": (3840, 2160)},
-            lores={"size": (1024, 768), "format": "RGB888"},  # RGB مستقیم
-            display="lores",
-            encode="main"
-        )
-        self.picam2.set_controls({"FrameRate": 30.0})
-        self.picam2.configure(config)
-        self.picam2.start()
-        time.sleep(2)  # منتظر ماندن برای پایدار شدن دوربین
-
-        # متغیرهای ضبط
-        self.recording = False
-        self.recording_lock = Lock()
-        self.video_writer = None
-
+        Camera.conf(self,"full")
         # مسیرهای ذخیره‌سازی
         base_dir = os.path.dirname(__file__)
         self.image_folder = os.path.join(base_dir, 'static', 'media', 'images')
@@ -34,6 +54,7 @@ class Camera:
         os.makedirs(self.video_folder, exist_ok=True)
 
     def stream_frames(self):
+        Camera.conf(self,"low")
         """استریم ویدئو با کیفیت پایین برای روانی بیشتر"""
         while True:
             try:
@@ -48,6 +69,7 @@ class Camera:
                 time.sleep(0.1)
 
     def capture_image(self):
+        Camera.conf(self,"full")
         """گرفتن عکس با کیفیت بالا"""
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         filepath = os.path.join(self.image_folder, f"image_{timestamp}.jpg")
@@ -55,6 +77,7 @@ class Camera:
         return filepath
 
     def start_recording(self, duration=30):
+        Camera.conf(self,"low")
         """شروع ضبط ویدئو با کیفیت بالا"""
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         video_path = os.path.join(self.video_folder, f"video_{timestamp}.mp4")
