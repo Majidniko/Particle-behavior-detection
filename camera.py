@@ -10,13 +10,18 @@ class Camera:
         self.picam2 = Picamera2()
 
         # پیکربندی دوربین: main برای ضبط با کیفیت بالا، lores برای استریم سریع
+        # config = self.picam2.create_video_configuration(
+        #     main={"size": (3840, 2160)},
+        #     # lores={"size": (800, 600)},  # RGB مستقیم
+        #     # lores={"size": (800, 600), "format": "RGB888"},  # RGB مستقیم
+        #     display="main",
+        #     encode="main"
+        # )
         config = self.picam2.create_video_configuration(
-            main={"size": (3840, 2160)},
-            lores={"size": (1280, 768), "format": "RGB888"},  # RGB مستقیم
-            display="lores",
+            main={"size": (800, 600)},
             encode="main"
         )
-        self.picam2.set_controls({"FrameRate": 30.0})
+        self.picam2.set_controls({"FrameRate": 15.0})
         self.picam2.configure(config)
         self.picam2.start()
         time.sleep(2)  # منتظر ماندن برای پایدار شدن دوربین
@@ -35,10 +40,22 @@ class Camera:
 
     def stream_frames(self):
         """استریم ویدئو با کیفیت پایین برای روانی بیشتر"""
+                # پیکربندی دوربین: main برای ضبط با کیفیت بالا، lores برای استریم سریع
+
         while True:
             try:
-                frame = self.picam2.capture_array("lores")
-                frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                # frame = self.picam2.capture_array("lores")
+                # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                # frame = self.picam2.capture_array("lores")
+                # if len(frame.shape) == 2 or frame.shape[2] == 1:
+                #     # خاکستری
+                #     frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+                # elif frame.shape[2] == 2:  # YUV422
+                #      frame = cv2.cvtColor(frame, cv2.COLOR_YUV2BGR_YUY2)
+                # elif frame.shape[2] == 3:
+                # # اگر مطمئن نیستی BGR یا RGB هست، بهتره تست کنی
+                #     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                frame = self.picam2.capture_array("main")
                 ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
                 if ret:
                     yield (b'--frame\r\n'
@@ -48,6 +65,13 @@ class Camera:
                 time.sleep(0.1)
 
     def capture_image(self):
+        config = self.picam2.create_video_configuration(
+            main={"size": (3840, 2160)},
+            encode="main"
+        )
+        self.picam2.set_controls({"FrameRate": 30.0})
+        self.picam2.configure(config)
+        self.picam2.start()
         """گرفتن عکس با کیفیت بالا"""
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         filepath = os.path.join(self.image_folder, f"image_{timestamp}.jpg")
@@ -55,6 +79,13 @@ class Camera:
         return filepath
 
     def start_recording(self, duration=60):
+        config = self.picam2.create_video_configuration(
+            main={"size": (3840, 2160)},
+            encode="main"
+        )
+        self.picam2.set_controls({"FrameRate": 30.0})
+        self.picam2.configure(config)
+        self.picam2.start()
         """شروع ضبط ویدئو با کیفیت بالا"""
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         video_path = os.path.join(self.video_folder, f"video_{timestamp}.mp4")
