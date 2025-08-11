@@ -12,9 +12,9 @@ class Camera:
         # پیکربندی دوربین: main برای ضبط با کیفیت بالا، lores برای استریم سریع
         config = self.picam2.create_video_configuration(
             main={"size": (3840, 2160)},
-            #lores={"size": (800, 600)},  # RGB مستقیم
-            lores={"size": (800, 600), "format": "RGB888"},  # RGB مستقیم
-            display="lores",
+            # lores={"size": (800, 600)},  # RGB مستقیم
+            # lores={"size": (800, 600), "format": "RGB888"},  # RGB مستقیم
+            display="main",
             encode="main"
         )
         self.picam2.set_controls({"FrameRate": 30.0})
@@ -47,7 +47,7 @@ class Camera:
                 elif frame.shape[2] == 2:  # YUV422
                      frame = cv2.cvtColor(frame, cv2.COLOR_YUV2BGR_YUY2)
                 elif frame.shape[2] == 3:
-                    # اگر مطمئن نیستی BGR یا RGB هست، بهتره تست کنی
+                # اگر مطمئن نیستی BGR یا RGB هست، بهتره تست کنی
                     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
                 ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
                 if ret:
