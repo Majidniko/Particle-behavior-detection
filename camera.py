@@ -8,8 +8,7 @@ from libcamera import controls
 class Camera:
     def conf(self,mode):
         if mode =="full":
-            self.picam2 = Picamera2()
-                    # پیکربندی دوربین: main برای ضبط با کیفیت بالا، lores برای استریم سریع
+            # پیکربندی دوربین: main برای ضبط با کیفیت بالا، lores برای استریم سریع
             config = self.picam2.create_video_configuration(
                 main={"size": (3840, 2160)},
                 lores={"size": (1024, 768), "format": "RGB888"},  # RGB مستقیم
@@ -26,8 +25,7 @@ class Camera:
             self.recording_lock = Lock()
             self.video_writer = None
         else:
-            self.picam2 = Picamera2()
-                    # پیکربندی دوربین: main برای ضبط با کیفیت بالا، lores برای استریم سریع
+            # پیکربندی دوربین: main برای ضبط با کیفیت بالا، lores برای استریم سریع
             config = self.picam2.create_video_configuration(
                 main={"size": (1920, 1080)},
                 lores={"size": (1024, 768), "format": "RGB888"},  # RGB مستقیم
@@ -44,7 +42,7 @@ class Camera:
             self.recording_lock = Lock()
             self.video_writer = None
     def __init__(self):
-        
+        self.picam2 = Picamera2()
         Camera.conf(self,"full")
         # مسیرهای ذخیره‌سازی
         base_dir = os.path.dirname(__file__)
