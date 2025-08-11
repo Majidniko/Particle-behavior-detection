@@ -4,9 +4,11 @@ import cv2
 from threading import Lock
 from picamera2 import Picamera2
 from libcamera import controls
+from safe_storage import SafeStorage
 
 class Camera:
     def __init__(self):
+        self.storage = SafeStorage()
         self.picam2 = Picamera2()
         
         # پیکربندی اولیه دوربین
@@ -69,9 +71,10 @@ class Camera:
             time.sleep(1)
             
             timestamp = time.strftime("%Y%m%d-%H%M%S")
-            filepath = os.path.join(self.image_folder, f"image_{timestamp}.jpg")
-            self.picam2.capture_file(filepath)
-            return filepath
+            # filepath = os.path.join(self.image_folder, f"image_{timestamp}.jpg")
+            # self.picam2.capture_file(filepath)
+            # return filepath
+            
         except Exception as e:
             print(f"[Capture Error]: {e}")
             return None
