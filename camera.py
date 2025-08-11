@@ -1,179 +1,112 @@
 import os
 import time
 import cv2
-import tempfile
-import shutil
-from threading import Lock, Thread
+from threading import Lock
 from picamera2 import Picamera2
 from libcamera import controls
+from safe_storage import SafeStorage
 
 class Camera:
     def __init__(self):
+        self.storage = SafeStorage()
         self.picam2 = Picamera2()
         
-        # پیکربندی دوربین
-        config = self.picam2.create_video_configuration(
-            main={"size": (3840, 2160)},
-            lores={"size": (1024, 768), "format": "RGB888"},
-            display="lores",
-            encode="main"
-        )
-        self.picam2.set_controls({"FrameRate": 30.0})
-        self.picam2.configure(config)
-        self.picam2.start()
-        time.sleep(2)
-
+        # پیکربندی اولیه دوربین
+        self.configure_camera(3840, 2160)  # رزولوشن اولیه 4K
+        
         # متغیرهای ضبط
         self.recording = False
         self.recording_lock = Lock()
         self.video_writer = None
         
-        # مسیرهای ذخیره‌سازی موقت
-        self.temp_dir = os.path.join(tempfile.gettempdir(), 'raspberry_camera_temp')
-        os.makedirs(self.temp_dir, exist_ok=True)
-        
-        # فلش دیسک
-        self.flash_mounted = False
-        self.flash_path = None
-        self._check_flash()
+        # مسیرهای ذخیره‌سازی
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.image_folder = os.path.join(base_dir, 'static', 'media', 'images')
+        self.video_folder = os.path.join(base_dir, 'static', 'media', 'videos')
+        os.makedirs(self.image_folder, exist_ok=True)
+        os.makedirs(self.video_folder, exist_ok=True)
 
-    def _check_flash(self):
-        """بررسی وجود و وضعیت فلش دیسک"""
-        try:
-            # این بخش را با کدهای تشخیص فلش از ماژول flash_detector جایگزین کنید
-            # برای مثال ساده:
-            possible_mounts = ['/media/pi', '/mnt/usb']
-            for mount in possible_mounts:
-                if os.path.exists(mount) and os.path.ismount(mount):
-                    self.flash_path = mount
-                    self.flash_mounted = True
-                    os.makedirs(os.path.join(self.flash_path, 'images'), exist_ok=True)
-                    os.makedirs(os.path.join(self.flash_path, 'videos'), exist_ok=True)
-                    return True
-            
-            self.flash_mounted = False
-            return False
-        except Exception as e:
-            print(f"خطا در بررسی فلش دیسک: {e}")
-            self.flash_mounted = False
-            return False
-
-    def _transfer_to_flash(self, src_path, file_type, callback=None):
-        """انتقال فایل به فلش دیسک"""
-        try:
-            if not self.flash_mounted and not self._check_flash():
-                raise RuntimeError("ذخیره ساز خارجی یافت نشد")
-            
-            filename = os.path.basename(src_path)
-            dest_path = os.path.join(self.flash_path, file_type, filename)
-            
-            # کپی فایل به فلش
-            shutil.copy2(src_path, dest_path)
-            
-            # حذف فایل موقت
-            os.remove(src_path)
-            
-            if callback:
-                callback(dest_path)
-            return dest_path
-        except Exception as e:
-            if callback:
-                callback(None, str(e))
-            raise RuntimeError(f"خطا در انتقال به فلش: {str(e)}")
+    def configure_camera(self, width, height):
+        """پیکربندی دوربین با اندازه‌های مشخص"""
+        config = self.picam2.create_video_configuration(
+            main={"size": (width, height), "format": "RGB888"},
+            lores={"size": (1024, 768), "format": "YUV420"},
+            display="lores"
+        )
+        self.picam2.configure(config)
+        self.picam2.set_controls({"FrameRate": 30.0})
+        self.picam2.start()
+        time.sleep(2)  # زمان برای پایدار شدن دوربین
 
     def stream_frames(self):
-        """استریم ویدئو (بدون تغییر)"""
-        self.picam2.stop()
-        stream_config = self.picam2.create_video_configuration(
-            main={"size": (800, 600)},  
-            lores={"size": (700, 460)},
-            display="lores",
-            encode="main"
-        )
-        self.picam2.configure(stream_config)
-        self.picam2.start()
-        time.sleep(1)
-        
-        while True:
-            try:
-                frame = self.picam2.capture_array("main")
-                frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 10])
+        """استریم ویدئو با کیفیت پایین برای روانی بیشتر"""
+        try:
+            while True:
+                frame = self.picam2.capture_array("lores")
+                frame = cv2.cvtColor(frame, cv2.COLOR_YUV420p2RGB)
+                frame = cv2.resize(frame, (640, 480))  # کاهش سایز برای استریم روان
+                ret, buffer = cv2.imencode('.jpg', frame, [
+                    int(cv2.IMWRITE_JPEG_QUALITY), 50
+                ])
                 if ret:
                     yield (b'--frame\r\n'
                            b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-            except Exception as e:
-                print(f"[Stream Error]: {e}")
-                time.sleep(0.1)
+        except Exception as e:
+            print(f"[Stream Error]: {e}")
+        finally:
+            self.picam2.stop()
 
     def capture_image(self):
-        """گرفتن عکس با ذخیره‌سازی موقت و انتقال به فلش"""
+        """گرفتن عکس با کیفیت بالا"""
         try:
             # تغییر به حالت عکسبرداری با کیفیت بالا
             self.picam2.stop()
-            fullres_config = self.picam2.create_video_configuration(
+            config = self.picam2.create_still_configuration(
                 main={"size": (3840, 2160)},
                 lores={"size": (1024, 768)},
-                display="lores",
-                encode="main"
+                display="lores"
             )
-            self.picam2.configure(fullres_config)
+            self.picam2.configure(config)
             self.picam2.start()
             time.sleep(1)
-
-            # ذخیره موقت
+            
             timestamp = time.strftime("%Y%m%d-%H%M%S")
-            temp_path = os.path.join(self.temp_dir, f"image_{timestamp}.jpg")
-            self.picam2.capture_file(temp_path)
-            
-            # انتقال به فلش در پس‌زمینه
-            Thread(target=self._transfer_to_flash, 
-                  args=(temp_path, 'images', self._image_transfer_callback)).start()
-            
-            return temp_path  # مسیر موقت برای پیگیری وضعیت
+            # filepath = os.path.join(self.image_folder, f"image_{timestamp}.jpg")
+            # self.picam2.capture_file(filepath)
+            # return filepath
             
         except Exception as e:
             print(f"[Capture Error]: {e}")
             return None
-
-    def _image_transfer_callback(self, final_path, error=None):
-        """تابع بازخوانی برای انتقال عکس"""
-        if error:
-            print(f"خطا در انتقال عکس: {error}")
-        elif final_path:
-            print(f"عکس با موفقیت انتقال یافت: {final_path}")
+        finally:
+            # بازگشت به حالت اولیه
+            self.configure_camera(3840, 2160)
 
     def start_recording(self, duration=30):
-        """شروع ضبط ویدئو با ذخیره‌سازی موقت"""
+        """شروع ضبط ویدئو با کیفیت بالا"""
         try:
-            if not self._check_flash():
-                raise RuntimeError("ذخیره ساز خارجی یافت نشد")
-            
             self.picam2.stop()
-            video_config = self.picam2.create_video_configuration(
+            config = self.picam2.create_video_configuration(
                 main={"size": (1920, 1080)},
                 lores={"size": (1024, 768)},
-                display="lores",
-                encode="main"
+                display="lores"
             )
-            self.picam2.configure(video_config)
+            self.picam2.configure(config)
             self.picam2.start()
             time.sleep(1)
-
-            # آماده‌سازی ضبط
+            
             timestamp = time.strftime("%Y%m%d_%H%M%S")
-            temp_path = os.path.join(self.temp_dir, f"video_{timestamp}.mp4")
+            video_path = os.path.join(self.video_folder, f"video_{timestamp}.mp4")
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             fps = 30
             frame_size = (1920, 1080)
 
             with self.recording_lock:
-                self.video_writer = cv2.VideoWriter(temp_path, fourcc, fps, frame_size)
+                self.video_writer = cv2.VideoWriter(video_path, fourcc, fps, frame_size)
                 if not self.video_writer.isOpened():
-                    raise RuntimeError("خطا در باز کردن ذخیره کننده ویدئو")
+                    raise RuntimeError("Cannot open video writer")
                 self.recording = True
 
-            # ضبط ویدئو
             start_time = time.time()
             max_frames = int(fps * duration)
             frames_captured = 0
@@ -189,25 +122,13 @@ class Camera:
                 frames_captured += 1
                 time.sleep(1 / fps)
 
-            # انتقال به فلش در پس‌زمینه
-            if self.recording:
-                Thread(target=self._transfer_to_flash, 
-                      args=(temp_path, 'videos', self._video_transfer_callback)).start()
-            
-            return temp_path  # مسیر موقت برای پیگیری وضعیت
-            
+            return video_path
         except Exception as e:
             print(f"[Recording Error]: {e}")
             return None
         finally:
             self.stop_recording()
-
-    def _video_transfer_callback(self, final_path, error=None):
-        """تابع بازخوانی برای انتقال ویدئو"""
-        if error:
-            print(f"خطا در انتقال ویدئو: {error}")
-        elif final_path:
-            print(f"ویدئو با موفقیت انتقال یافت: {final_path}")
+            self.configure_camera(3840, 2160)
 
     def stop_recording(self):
         """توقف ضبط"""

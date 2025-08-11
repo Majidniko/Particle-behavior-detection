@@ -20,7 +20,7 @@ class FlashDetector:
             )
             
             if result.returncode != 0:
-                print("Error in run command")
+                print("Error in run command lsblk")
                 return False, "خطا در اجرای دستور lsblk"
 
             import json
