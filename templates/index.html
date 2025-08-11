@@ -9,7 +9,7 @@
 </head>
 <body class="bg-dark text-light">
 <div class="container py-4">
-    <h1 class="text-center mb-4"> Microscopic camera preview 📷 پیش نمایش دوربین سیستم آزمایشگاهی </h1>
+    <h2 class="text-center mb-4"> Microscopic camera preview 📷 پیش نمایش دوربین سیستم آزمایشگاهی </h2>
 
     <div class="card bg-secondary text-center p-3 mx-auto" style="max-width: 600px;">
         <img src="{{ url_for('video_feed') }}" class="img-fluid rounded border border-info shadow" alt="Live Video">
@@ -21,8 +21,16 @@
         <button id="record-btn" class="btn btn-danger mx-2">Record Video 🎥 ضبط ویدئو</button>
     </div>
 
-    <div id="message" class="text-center mt-3"></div>
 </div>
+<div class="mt-4 w-75 mx-auto">
+    <div class="progress" style="height: 30px;">
+        <div id="record-progress" 
+             class="progress-bar progress-bar-striped progress-bar-animated bg-danger" 
+             role="progressbar" style="width: 0%">0%</div>
+    </div>
+</div>
+<div id="message" class="text-center mt-3"></div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/static/js/script.js"></script>
