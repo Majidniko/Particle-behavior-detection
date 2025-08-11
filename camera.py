@@ -86,7 +86,7 @@ class Camera:
         self.picam2.stop()
         stream_config = self.picam2.create_video_configuration(
             main={"size": (800, 600)},  
-            lores={"size": (1024, 768)},
+            lores={"size": (700, 460)},
             display="lores",
             encode="main"
         )
