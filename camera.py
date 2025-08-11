@@ -55,6 +55,7 @@ class Camera:
                 # elif frame.shape[2] == 3:
                 # # اگر مطمئن نیستی BGR یا RGB هست، بهتره تست کنی
                 #     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                frame = self.picam2.capture_array("main")
                 ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
                 if ret:
                     yield (b'--frame\r\n'
