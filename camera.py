@@ -60,7 +60,9 @@ class Camera:
             # تغییر به حالت عکسبرداری با کیفیت بالا
             self.picam2.stop()
             config = self.picam2.create_still_configuration(
-                main={"size": (3840, 2160)}
+                main={"size": (3840, 2160)},
+                lores={"size": (1024, 768)},
+                display="lores"
             )
             self.picam2.configure(config)
             self.picam2.start()
