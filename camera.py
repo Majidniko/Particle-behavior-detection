@@ -54,7 +54,7 @@ class Camera:
         self.picam2.capture_file(filepath)
         return filepath
 
-    def start_recording(self, duration=60):
+    def start_recording(self, duration=30):
         """شروع ضبط ویدئو با کیفیت بالا"""
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         video_path = os.path.join(self.video_folder, f"video_{timestamp}.mp4")
@@ -65,7 +65,7 @@ class Camera:
         with self.recording_lock:
             self.video_writer = cv2.VideoWriter(video_path, fourcc, fps, frame_size)
             if not self.video_writer.isOpened():
-                raise RuntimeError("Cannot open video writer")
+                raise RuntimeError("Cannot open video writer - خطا در باز کردن ذخیره کننده ویدئو")
             self.recording = True
 
         start_time = time.time()

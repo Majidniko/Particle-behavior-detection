@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>دوربین رزبری پای</title>
+    <title>Camera Live view 📷 پخش زنده دوربین</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body class="bg-dark text-light">
 <div class="container py-4">
-    <h1 class="text-center mb-4">📷 سیستم دوربین رزبری پای</h1>
+    <h1 class="text-center mb-4"> Microscopic camera preview 📷 پیش نمایش دوربین سیستم آزمایشگاهی </h1>
 
     <div class="card bg-secondary text-center p-3 mx-auto" style="max-width: 600px;">
         <img src="{{ url_for('video_feed') }}" class="img-fluid rounded border border-info shadow" alt="Live Video">
@@ -17,8 +17,8 @@
 
 
     <div class="d-flex justify-content-center mt-4">
-        <button id="capture-btn" class="btn btn-success mx-2">📸 گرفتن عکس</button>
-        <button id="record-btn" class="btn btn-danger mx-2">🎥 ضبط ویدئو</button>
+        <button id="capture-btn" class="btn btn-success mx-2">Take Picture 📸 گرفتن عکس</button>
+        <button id="record-btn" class="btn btn-danger mx-2">Take Picture 📸 گرفتن عکس</button>
     </div>
 
     <div id="message" class="text-center mt-3"></div>
