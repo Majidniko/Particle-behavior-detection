@@ -1,135 +1,112 @@
-import os
-import time
-import cv2
+from flask import Flask, render_template, Response, request, jsonify
 from picamera2 import Picamera2
-from libcamera import controls
+import time, os, cv2
 from threading import Lock
-import shutil
+from libcamera import controls
 
-# 📌 مسیرهای ذخیره
-LOCAL_IMAGE_FOLDER = os.path.join(os.path.dirname(__file__), 'static/images')
-LOCAL_VIDEO_FOLDER = os.path.join(os.path.dirname(__file__), 'static/videos')
-os.makedirs(LOCAL_IMAGE_FOLDER, exist_ok=True)
-os.makedirs(LOCAL_VIDEO_FOLDER, exist_ok=True)
-
-# 📌 مسیر USB (اینجا فرض می‌کنیم فلش در این مسیر mount شده)
-USB_MOUNT_PATH = "/media/pi/USB"
-
-# قفل برای جلوگیری از تداخل ضبط
-recording_lock = Lock()
-recording = False
-video_writer = None
-
-# راه‌اندازی دوربین
+app = Flask(__name__)
 picam2 = Picamera2()
+
+# تنظیم دوربین
 config = picam2.create_video_configuration(
     main={"size": (3840, 2160)},
     lores={"size": (1024, 768)},
     display="lores",
     encode="main"
 )
-picam2.set_controls({
-    "FrameRate": 30.0
-})
+picam2.set_controls({"FrameRate": 30.0})
 picam2.configure(config)
 picam2.start()
 time.sleep(2)
 
-def find_usb_mount():
-    """
-    جستجوی خودکار مسیر فلش USB
-    مسیرها معمولاً در /media/<username>/USB_NAME قرار دارند
-    """
-    media_root = "/media"
-    if not os.path.exists(media_root):
-        return None
+# مسیر ذخیره فایل‌ها
+IMAGE_FOLDER = os.path.join(os.path.dirname(__file__), 'static/images')
+os.makedirs(IMAGE_FOLDER, exist_ok=True)
 
-    # بررسی تمام پوشه‌ها در /media
-    for root, dirs, files in os.walk(media_root):
-        for dir_name in dirs:
-            mount_path = os.path.join(root, dir_name)
-            # اگر مسیر mount شده باشد و پوشه باشد، به عنوان USB در نظر می‌گیریم
-            if os.path.ismount(mount_path):
-                return mount_path
-    return None
-
-def is_usb_connected():
-    """بررسی اتصال فلش USB با جستجوی خودکار"""
-    usb_path = find_usb_mount()
-    return usb_path is not None
-
-def move_to_usb(local_path):
-    """انتقال فایل به USB و حذف نسخه محلی"""
-    usb_path = find_usb_mount()
-    if not usb_path:
-        raise RuntimeError("حافظه خارجی متصل نیست")
-
-    destination_path = os.path.join(usb_path, os.path.basename(local_path))
-    shutil.move(local_path, destination_path)  # انتقال و حذف فایل محلی
-    return destination_path
+recording = False
+paused = False
+recording_lock = Lock()
+video_writer = None
+video_path = None
 
 def gen_frames():
-    """ارسال فریم‌ها برای پیش‌نمایش"""
     while True:
-        try:
-            frame = picam2.capture_array("lores")
-            frame = cv2.cvtColor(frame, cv2.COLOR_YUV420p2RGB)
-            ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
-            if not ret:
-                continue
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-        except Exception as e:
-            print(f"Frame capture error: {e}")
-            time.sleep(0.1)
-            continue
+        frame = picam2.capture_array("lores")
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+        if ret:
+            yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
 
-def capture_image():
-    """گرفتن عکس و ذخیره در USB"""
-    if not is_usb_connected():
-        raise RuntimeError("حافظه خارجی متصل نیست")
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/video_feed')
+def video_feed():
+    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/capture', methods=['POST'])
+def capture():
+    sample_id = request.form.get("sampleId", "").strip()
+    if not sample_id:
+        return {'status': 'error', 'message': 'Sample ID is required'}
 
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    local_path = os.path.join(LOCAL_IMAGE_FOLDER, f"image_{timestamp}.jpg")
-    picam2.capture_file(local_path)
+    filename = f"{sample_id}_{timestamp}.jpg"
+    filepath = os.path.join(IMAGE_FOLDER, filename)
+    picam2.capture_file(filepath)
+    return {'status': 'success', 'filename': filename}
 
-    usb_path = move_to_usb(local_path)
-    return usb_path
+@app.route('/start_recording', methods=['POST'])
+def start_recording():
+    global recording, video_writer, video_path
+    sample_id = request.form.get("sampleId", "").strip()
+    duration = int(request.form.get("duration", 10))
 
-def start_recording(duration=30):
-    """ضبط ویدئو و ذخیره در USB"""
-    if not is_usb_connected():
-        raise RuntimeError("حافظه خارجی متصل نیست")
+    if not sample_id:
+        return jsonify({"status": "error", "message": "Sample ID is required"}), 400
 
-    global recording, video_writer
     timestamp = time.strftime("%Y%m%d_%H%M%S")
-    local_path = os.path.join(LOCAL_VIDEO_FOLDER, f"video_{timestamp}.mp4")
+    video_path = os.path.join(IMAGE_FOLDER, f"{sample_id}_{timestamp}.mp4")
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    fps = 15
-    frame_size = (1920, 1080)  # رزولوشن ضبط ویدئو
+    video_writer = cv2.VideoWriter(video_path, fourcc, 30, (3840, 2160))
 
-    with recording_lock:
-        video_writer = cv2.VideoWriter(local_path, fourcc, fps, frame_size)
-        if not video_writer.isOpened():
-            raise RuntimeError("خطا در باز کردن ویدئو نویس")
-        recording = True
+    recording = True
+    end_time = time.time() + duration
 
-    start_time = time.time()
-    try:
-        while recording and (time.time() - start_time) < duration:
-            frame = picam2.capture_array("lores")
+    def record_loop():
+        global recording, paused
+        while time.time() < end_time and recording:
+            if paused:
+                time.sleep(0.1)
+                continue
+            frame = picam2.capture_array("main")
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-            with recording_lock:
-                if video_writer is not None:
-                    video_writer.write(frame)
-            time.sleep(1 / fps)
-    finally:
-        with recording_lock:
-            recording = False
-            if video_writer is not None:
-                video_writer.release()
-                video_writer = None
+            video_writer.write(frame)
+            time.sleep(1/30)
+        stop_recording()
 
-    usb_path = move_to_usb(local_path)
-    return usb_path
+    from threading import Thread
+    Thread(target=record_loop, daemon=True).start()
+    return jsonify({"status": "success"})
+
+@app.route('/pause_recording', methods=['POST'])
+def pause_recording():
+    global paused
+    paused = not paused
+    return jsonify({"status": "success"})
+
+@app.route('/stop_recording', methods=['POST'])
+def stop_recording():
+    global recording, video_writer, video_path
+    if recording:
+        recording = False
+        if video_writer:
+            video_writer.release()
+            video_writer = None
+        return jsonify({"status": "success", "path": video_path})
+    return jsonify({"status": "error", "message": "Not recording"})
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, threaded=True)
