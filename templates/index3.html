@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Raspberry Pi Camera Control</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #videoContainer {
+            max-width: 640px;
+            margin: auto;
+        }
+        #videoFeed {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+        }
+    </style>
+</head>
+<body class="bg-light">
+<div class="container py-4">
+    <h2 class="text-center mb-4">ðŸ“· Raspberry Pi Camera</h2>
+
+    <!-- Sample ID Input -->
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label for="sampleId" class="form-label">Sample ID</label>
+        <input type="text" id="sampleId" class="form-control" placeholder="Enter Sample ID">
+    </div>
+    <div class="col-md-6 mb-3">
+        <label for="duration" class="form-label">Recording Duration (seconds)</label>
+        <input type="number" id="duration" class="form-control" value="10" min="1">
+    </div>
+</div>
+
+
+
+    <!-- Recording Duration Input -->
+    <div class="mb-3">
+
+    </div>
+
+    <!-- Video Preview -->
+    <div id="videoContainer" class="mb-3">
+        <img id="videoFeed" src="/video_feed" alt="Live Camera">
+    </div>
+
+    <!-- Buttons -->
+    <div class="d-flex gap-2 justify-content-center">
+        <button id="captureBtn" class="btn btn-primary" disabled>ðŸ“· Take Photo</button>
+        <button id="recordBtn" class="btn btn-danger" disabled>ðŸŽ¥ Start Recording</button>
+        <button id="pauseBtn" class="btn btn-warning" disabled>â¸ Pause</button>
+        <button id="stopBtn" class="btn btn-secondary" disabled>â¹ Stop</button>
+    </div>
+</div>
+
+<script>
+    const sampleIdInput = document.getElementById('sampleId');
+    const durationInput = document.getElementById('duration');
+    const captureBtn = document.getElementById('captureBtn');
+    const recordBtn = document.getElementById('recordBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const stopBtn = document.getElementById('stopBtn');
+
+    // ÙØ¹Ø§Ù„â€ŒØ³Ø§Ø²ÛŒ Ø¯Ú©Ù…Ù‡â€ŒÙ‡Ø§ ÙˆÙ‚ØªÛŒ Sample ID Ù¾Ø± Ø¨Ø§Ø´Ø¯
+    sampleIdInput.addEventListener('input', () => {
+        const hasValue = sampleIdInput.value.trim() !== "";
+        captureBtn.disabled = !hasValue;
+        recordBtn.disabled = !hasValue;
+    });
+
+    // Ú¯Ø±ÙØªÙ† Ø¹Ú©Ø³
+    captureBtn.addEventListener('click', () => {
+        const formData = new FormData();
+        formData.append("sampleId", sampleIdInput.value.trim());
+
+        fetch("/capture", { method: "POST", body: formData })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.status === "success" ? `âœ… Photo saved: ${data.filename}` : `âŒ ${data.message}`);
+            });
+    });
+
+    // Ø´Ø±ÙˆØ¹ Ø¶Ø¨Ø·
+    recordBtn.addEventListener('click', () => {
+        const formData = new FormData();
+        formData.append("sampleId", sampleIdInput.value.trim());
+        formData.append("duration", durationInput.value);
+
+        fetch("/start_recording", { method: "POST", body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+                    alert("ðŸŽ¥ Recording started");
+                    pauseBtn.disabled = false;
+                    stopBtn.disabled = false;
+                } else {
+                    alert(`âŒ ${data.message}`);
+                }
+            });
+    });
+
+    // ØªÙˆÙ‚Ù Ø¶Ø¨Ø·
+    stopBtn.addEventListener('click', () => {
+        fetch("/stop_recording", { method: "POST" })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.status === "success" ? `âœ… Video saved: ${data.path}` : `âŒ ${data.message}`);
+                pauseBtn.disabled = true;
+                stopBtn.disabled = true;
+            });
+    });
+
+    // ØªÙˆÙ‚Ù Ù…ÙˆÙ‚Øª Ø¶Ø¨Ø·
+    pauseBtn.addEventListener('click', () => {
+        fetch("/pause_recording", { method: "POST" })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.status === "success" ? "â¸ Recording paused/resumed" : `âŒ ${data.message}`);
+            });
+    });
+</script>
+</body>
+</html>
