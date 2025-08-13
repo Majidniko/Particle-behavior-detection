@@ -24,7 +24,6 @@ video_writer = None
 picam2 = Picamera2()
 config = picam2.create_video_configuration(
     main={"size": (3840, 2160)},
-    capture={"size": (1920, 1080)},
     lores={"size": (1024, 768)},
     display="lores",
     encode="main"
@@ -109,7 +108,7 @@ def start_recording(duration):
 
 
     # Get camera resolution dynamically
-    test_frame = picam2.capture_array("capture")
+    test_frame = picam2.capture_array("lores")
     frame_size = (test_frame.shape[1], test_frame.shape[0])  # (width, height)
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     fps = 30
