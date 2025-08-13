@@ -110,7 +110,7 @@ def start_recording(duration=30):
     os.makedirs(LOCAL_VIDEO_FOLDER, exist_ok=True)
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    fps = 15
+    fps = 30
     frame_size = (1920, 1080)
 
     with recording_lock:
