@@ -97,40 +97,42 @@ def capture_image():
     usb_path = move_to_usb(local_path)
     return usb_path
 
-def start_recording(duration):
-    """Record video and save to USB"""
+def start_recording(duration=30):
     if not is_usb_connected():
-        raise RuntimeError("USB storage not connected")
+        raise RuntimeError("USB not connected")
 
     global recording, video_writer
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     local_path = os.path.join(LOCAL_VIDEO_FOLDER, f"video_{timestamp}.mp4")
-    
-    # Ensure folder exists
-    os.makedirs(LOCAL_VIDEO_FOLDER, exist_ok=True)
+    os.makedirs(LOCAL_VIDEO_FOLDER, exist_ok=True)  # Ensure folder exists
 
+    # Get camera resolution dynamically
+    test_frame = picam2.capture_array("main")
+    frame_size = (test_frame.shape[1], test_frame.shape[0])  # (width, height)
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    fps = 30
-    frame_size = (1920, 1080)
+    fps = 15
 
     with recording_lock:
         video_writer = cv2.VideoWriter(local_path, fourcc, fps, frame_size)
-        if not video_writer.isOpened():
-            raise RuntimeError("Failed to initialize video writer")
+        if not video_writer.isOpened():  # Critical check!
+            raise RuntimeError(f"VideoWriter failed for {local_path}")
         recording = True
 
     start_time = time.time()
     try:
         while recording and (time.time() - start_time) < duration:
             frame = picam2.capture_array("main")
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Fixed!
+            if frame is None:  # Check for empty frames
+                print("Warning: Empty frame captured")
+                continue
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             with recording_lock:
                 if video_writer is not None:
                     video_writer.write(frame)
             time.sleep(1 / fps)
     except Exception as e:
-        print("Recording error:", str(e))  # Log the error
-        raise  # Re-raise to handle in the Flask route
+        print("Recording error:", str(e))
+        raise
     finally:
         with recording_lock:
             recording = False
