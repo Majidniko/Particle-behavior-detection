@@ -5,7 +5,7 @@ app.py
 """
 from flask import Flask, render_template, Response, jsonify, request
 from camera import gen_frames, capture_image, start_recording
-from updater import check_and_update  # اگر آپدیت خودکار داری
+# from updater import check_and_update  # اگر آپدیت خودکار داری
 
 app = Flask(__name__)
 
@@ -36,5 +36,5 @@ def start_rec():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
-    check_and_update()  # اگر لازم داری
+    # check_and_update()  # اگر لازم داری
     app.run(host='0.0.0.0', port=5000, threaded=True)
