@@ -101,6 +101,14 @@ def start_recording(duration):
     if not is_usb_connected():
         raise RuntimeError("USB not connected")
 
+    config = picam2.create_video_configuration(
+        main={"size": (1920, 1080)},
+        lores={"size": (1024, 768)},
+        display="lores",
+        encode="main"
+    )
+    picam2.configure(config)
+    picam2.start()
     global recording, video_writer
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     local_path = os.path.join(LOCAL_VIDEO_FOLDER, f"video_{timestamp}.mp4")
@@ -140,6 +148,15 @@ def start_recording(duration):
             if video_writer is not None:
                 video_writer.release()
                 video_writer = None
+                
+        config = picam2.create_video_configuration(
+        main={"size": (3840, 2160)},
+        lores={"size": (1024, 768)},
+        display="lores",
+        encode="main"
+    )
+    picam2.configure(config)
+    picam2.start()
 
     usb_path = move_to_usb(local_path)
     return usb_path
