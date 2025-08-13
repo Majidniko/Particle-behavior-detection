@@ -19,18 +19,25 @@
 </head>
 <body class="bg-light">
 <div class="container py-4">
-    <h2 class="text-center mb-4">📷 Raspberry Pi Camera</h2>
+    <h2 class="text-center mb-4">ðŸ“· Raspberry Pi Camera</h2>
 
     <!-- Sample ID Input -->
-    <div class="mb-3">
+<div class="row">
+    <div class="col-md-6 mb-3">
         <label for="sampleId" class="form-label">Sample ID</label>
         <input type="text" id="sampleId" class="form-control" placeholder="Enter Sample ID">
     </div>
+    <div class="col-md-6 mb-3">
+        <label for="duration" class="form-label">Recording Duration (seconds)</label>
+        <input type="number" id="duration" class="form-control" value="10" min="1">
+    </div>
+</div>
+
+
 
     <!-- Recording Duration Input -->
     <div class="mb-3">
-        <label for="duration" class="form-label">Recording Duration (seconds)</label>
-        <input type="number" id="duration" class="form-control" value="10" min="1">
+
     </div>
 
     <!-- Video Preview -->
@@ -40,10 +47,10 @@
 
     <!-- Buttons -->
     <div class="d-flex gap-2 justify-content-center">
-        <button id="captureBtn" class="btn btn-primary" disabled>📷 Take Photo</button>
-        <button id="recordBtn" class="btn btn-danger" disabled>🎥 Start Recording</button>
-        <button id="pauseBtn" class="btn btn-warning" disabled>⏸ Pause</button>
-        <button id="stopBtn" class="btn btn-secondary" disabled>⏹ Stop</button>
+        <button id="captureBtn" class="btn btn-primary" disabled>ðŸ“· Take Photo</button>
+        <button id="recordBtn" class="btn btn-danger" disabled>ðŸŽ¥ Start Recording</button>
+        <button id="pauseBtn" class="btn btn-warning" disabled>â¸ Pause</button>
+        <button id="stopBtn" class="btn btn-secondary" disabled>â¹ Stop</button>
     </div>
 </div>
 
@@ -55,14 +62,14 @@
     const pauseBtn = document.getElementById('pauseBtn');
     const stopBtn = document.getElementById('stopBtn');
 
-    // فعال‌سازی دکمه‌ها وقتی Sample ID پر باشد
+    // ÙØ¹Ø§Ù„â€ŒØ³Ø§Ø²ÛŒ Ø¯Ú©Ù…Ù‡â€ŒÙ‡Ø§ ÙˆÙ‚ØªÛŒ Sample ID Ù¾Ø± Ø¨Ø§Ø´Ø¯
     sampleIdInput.addEventListener('input', () => {
         const hasValue = sampleIdInput.value.trim() !== "";
         captureBtn.disabled = !hasValue;
         recordBtn.disabled = !hasValue;
     });
 
-    // گرفتن عکس
+    // Ú¯Ø±ÙØªÙ† Ø¹Ú©Ø³
     captureBtn.addEventListener('click', () => {
         const formData = new FormData();
         formData.append("sampleId", sampleIdInput.value.trim());
@@ -70,11 +77,11 @@
         fetch("/capture", { method: "POST", body: formData })
             .then(res => res.json())
             .then(data => {
-                alert(data.status === "success" ? `✅ Photo saved: ${data.filename}` : `❌ ${data.message}`);
+                alert(data.status === "success" ? `âœ… Photo saved: ${data.filename}` : `âŒ ${data.message}`);
             });
     });
 
-    // شروع ضبط
+    // Ø´Ø±ÙˆØ¹ Ø¶Ø¨Ø·
     recordBtn.addEventListener('click', () => {
         const formData = new FormData();
         formData.append("sampleId", sampleIdInput.value.trim());
@@ -84,32 +91,32 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status === "success") {
-                    alert("🎥 Recording started");
+                    alert("ðŸŽ¥ Recording started");
                     pauseBtn.disabled = false;
                     stopBtn.disabled = false;
                 } else {
-                    alert(`❌ ${data.message}`);
+                    alert(`âŒ ${data.message}`);
                 }
             });
     });
 
-    // توقف ضبط
+    // ØªÙˆÙ‚Ù Ø¶Ø¨Ø·
     stopBtn.addEventListener('click', () => {
         fetch("/stop_recording", { method: "POST" })
             .then(res => res.json())
             .then(data => {
-                alert(data.status === "success" ? `✅ Video saved: ${data.path}` : `❌ ${data.message}`);
+                alert(data.status === "success" ? `âœ… Video saved: ${data.path}` : `âŒ ${data.message}`);
                 pauseBtn.disabled = true;
                 stopBtn.disabled = true;
             });
     });
 
-    // توقف موقت ضبط
+    // ØªÙˆÙ‚Ù Ù…ÙˆÙ‚Øª Ø¶Ø¨Ø·
     pauseBtn.addEventListener('click', () => {
         fetch("/pause_recording", { method: "POST" })
             .then(res => res.json())
             .then(data => {
-                alert(data.status === "success" ? "⏸ Recording paused/resumed" : `❌ ${data.message}`);
+                alert(data.status === "success" ? "â¸ Recording paused/resumed" : `âŒ ${data.message}`);
             });
     });
 </script>

@@ -7,7 +7,7 @@ from libcamera import controls
 app = Flask(__name__)
 picam2 = Picamera2()
 
-# تنظیم دوربین
+# ØªÙ†Ø¸ÛŒÙ… Ø¯ÙˆØ±Ø¨ÛŒÙ†
 config = picam2.create_video_configuration(
     main={"size": (3840, 2160)},
     lores={"size": (1024, 768)},
@@ -19,7 +19,7 @@ picam2.configure(config)
 picam2.start()
 time.sleep(2)
 
-# مسیر ذخیره فایل‌ها
+# Ù…Ø³ÛŒØ± Ø°Ø®ÛŒØ±Ù‡ ÙØ§ÛŒÙ„â€ŒÙ‡Ø§
 IMAGE_FOLDER = os.path.join(os.path.dirname(__file__), 'static/images')
 os.makedirs(IMAGE_FOLDER, exist_ok=True)
 
@@ -32,7 +32,7 @@ video_path = None
 def gen_frames():
     while True:
         frame = picam2.capture_array("lores")
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        frame = cv2.cvtColor(frame, cv2.COLOR_YUV420p2RGB)
         ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
         if ret:
             yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
