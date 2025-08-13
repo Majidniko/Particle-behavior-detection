@@ -64,7 +64,7 @@ def move_to_usb(local_path):
     if not usb_path:
         raise RuntimeError("حافظه خارجی متصل نیست")
 
-    destination_path = os.path.join(usb_path, os.path.basename(local_path),'media')
+    destination_path = os.path.join(usb_path, os.path.basename(local_path))
     shutil.move(local_path, destination_path)  # انتقال و حذف فایل محلی
     return destination_path
 
@@ -84,7 +84,7 @@ def gen_frames():
             time.sleep(0.1)
             continue
 
-def capture_image(sid):
+def capture_image():
     """گرفتن عکس و ذخیره در USB"""
     if not is_usb_connected():
         raise RuntimeError("حافظه خارجی متصل نیست")
