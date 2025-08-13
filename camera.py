@@ -97,7 +97,7 @@ def capture_image():
     usb_path = move_to_usb(local_path)
     return usb_path
 
-def start_recording(duration=30):
+def start_recording(duration):
     """Record video and save to USB"""
     if not is_usb_connected():
         raise RuntimeError("USB storage not connected")

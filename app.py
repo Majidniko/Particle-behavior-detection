@@ -29,7 +29,7 @@ def capture():
 def start_rec():
     """Start video recording"""
     try:
-        duration = int(request.form.get("duration", 30))
+        duration = int(request.form.get("duration", 60))
         print(f"Starting recording for {duration} seconds...")  # Debug
         path = start_recording(duration=duration)
         return jsonify({"status": "success", "path": path})
