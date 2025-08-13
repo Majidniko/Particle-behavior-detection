@@ -55,7 +55,7 @@ def gen_frames():
     while True:
         try:
             frame = picam2.capture_array("lores")  # استفاده از استریم کم‌حجم برای پیش‌نمایش
-            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            frame = cv2.cvtColor(frame, cv2.COLOR_YUV420p2RGB)
 
             ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
             if not ret:
