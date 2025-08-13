@@ -97,7 +97,7 @@ def capture_image():
     usb_path = move_to_usb(local_path)
     return usb_path
 
-def start_recording(duration=30):
+def start_recording(duration):
     if not is_usb_connected():
         raise RuntimeError("USB not connected")
 
@@ -110,7 +110,7 @@ def start_recording(duration=30):
     test_frame = picam2.capture_array("main")
     frame_size = (test_frame.shape[1], test_frame.shape[0])  # (width, height)
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    fps = 15
+    fps = 30
 
     with recording_lock:
         video_writer = cv2.VideoWriter(local_path, fourcc, fps, frame_size)
