@@ -27,12 +27,14 @@ def capture():
 
 @app.route('/start_recording', methods=['POST'])
 def start_rec():
-    """شروع ضبط ویدئو"""
+    """Start video recording"""
     try:
         duration = int(request.form.get("duration", 30))
+        print(f"Starting recording for {duration} seconds...")  # Debug
         path = start_recording(duration=duration)
         return jsonify({"status": "success", "path": path})
     except Exception as e:
+        print("Route error:", str(e))  # Log the error
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
