@@ -108,10 +108,10 @@ def start_recording(duration):
 
 
     # Get camera resolution dynamically
-    test_frame = picam2.capture_array("lores")
+    test_frame = picam2.capture_array("main")
     frame_size = (test_frame.shape[1], test_frame.shape[0])  # (width, height)
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    fps = 30
+    fps = 10
 
     with recording_lock:
         video_writer = cv2.VideoWriter(local_path, fourcc, fps, frame_size)
@@ -130,7 +130,7 @@ def start_recording(duration):
             with recording_lock:
                 if video_writer is not None:
                     video_writer.write(frame)
-            time.sleep(1 / fps)
+            time.sleep(1 / fps*2)
     except Exception as e:
         print("Recording error:", str(e))
         raise
